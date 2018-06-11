@@ -12,15 +12,15 @@ import ARKit
 class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 
     @IBOutlet weak var sceneView: ARSCNView!
-    @IBOutlet weak var eyeTrackingFocus: UIView!
     
+    @IBOutlet weak var eyeTrackingFocus: UIView!
     
     var faceNode: SCNNode = SCNNode()
     
     var eyeLNode: SCNNode = {
-        let geometry = SCNCone(topRadius: 0.005, bottomRadius: 0, height: 0.2)
+        let geometry = SCNCone(topRadius: 0.005, bottomRadius: 0.001, height: 0.3)
         geometry.radialSegmentCount = 3
-        geometry.firstMaterial?.diffuse.contents = UIColor.blue
+        geometry.firstMaterial?.diffuse.contents = UIColor.lightGray
         let node = SCNNode()
         node.geometry = geometry
         node.eulerAngles.x = -.pi / 2
@@ -31,9 +31,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }()
     
     var eyeRNode: SCNNode = {
-        let geometry = SCNCone(topRadius: 0.005, bottomRadius: 0, height: 0.2)
+        let geometry = SCNCone(topRadius: 0.005, bottomRadius: 0.001, height: 0.3)
         geometry.radialSegmentCount = 3
-        geometry.firstMaterial?.diffuse.contents = UIColor.blue
+        geometry.firstMaterial?.diffuse.contents = UIColor.lightGray
         let node = SCNNode()
         node.geometry = geometry
         node.eulerAngles.x = -.pi / 2
@@ -76,7 +76,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         // Setup Design Elements
         eyeTrackingFocus.layer.cornerRadius = eyeTrackingFocus.bounds.width / 2
-        sceneView.layer.cornerRadius = 28
+        
+        //sceneView.layer.cornerRadius = 28
         
         // Setup Scenegraph
         sceneView.scene.rootNode.addChildNode(faceNode)
@@ -135,9 +136,24 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         update(withFaceAnchor: faceAnchor)
     }
     
+    var blendShapes: [ARFaceAnchor.BlendShapeLocation: Any] = [:] {
+        didSet {
+            guard let eyeBlinkLeft = blendShapes[.eyeBlinkLeft] as? Float,
+                let eyeBlinkRight = blendShapes[.eyeBlinkRight] as? Float
+                else { return }
+ 
+            if(eyeBlinkLeft > 0.975 && eyeBlinkRight > 0.975)
+            {
+                print("======= Blinked =======")
+            }
+        }
+    }
+    
     // MARK: - update(ARFaceAnchor)
     
     func update(withFaceAnchor anchor: ARFaceAnchor) {
+        
+        blendShapes = anchor.blendShapes
         
         eyeRNode.simdTransform = anchor.rightEyeTransform
         eyeLNode.simdTransform = anchor.leftEyeTransform
@@ -145,7 +161,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         var eyeLLookAt = CGPoint()
         var eyeRLookAt = CGPoint()
         
-        let heightCompensation: CGFloat = 312
+        let heightCompensation: CGFloat = 100
         
         DispatchQueue.main.async {
             
