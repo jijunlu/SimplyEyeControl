@@ -9,18 +9,59 @@
 import UIKit
 import ARKit
 
-class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
+class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
 
     @IBOutlet weak var sceneView: ARSCNView!
     
     @IBOutlet weak var eyeTrackingFocus: UIView!
     
+    @IBOutlet weak var imageView1: UIImageView!
+    @IBOutlet weak var imageView2: UIImageView!
+
+    let configuration = ARFaceTrackingConfiguration()
+    //configuration.isLightEstimationEnabled = true
+    
+    
+    @IBAction func LoadImage1(_ sender: Any) {
+        
+        LoadImage()
+
+    }
+    
+    @objc func LoadImage() {
+        let picker = UIImagePickerController()
+        picker.allowsEditing = true
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        dismiss(animated: true)
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController,
+                               didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        var newImage: UIImage
+        
+        if let possibleImage = info[UIImagePickerController.InfoKey.editedImage] as? UIImage {
+            newImage = possibleImage
+        } else if let possibleImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
+            newImage = possibleImage
+        } else {
+            return
+        }
+        
+        imageView1.image = newImage
+        
+        dismiss(animated: true)
+    }
+    
     var faceNode: SCNNode = SCNNode()
     
     var eyeLNode: SCNNode = {
-        let geometry = SCNCone(topRadius: 0.005, bottomRadius: 0.001, height: 0.3)
-        geometry.radialSegmentCount = 3
-        geometry.firstMaterial?.diffuse.contents = UIColor.lightGray
+        let geometry = SCNCone(topRadius: 0.0, bottomRadius: 0.002, height: 0.3)
+        //geometry.radialSegmentCount = 3
+        geometry.firstMaterial?.diffuse.contents = UIColor.red
         let node = SCNNode()
         node.geometry = geometry
         node.eulerAngles.x = -.pi / 2
@@ -31,9 +72,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }()
     
     var eyeRNode: SCNNode = {
-        let geometry = SCNCone(topRadius: 0.005, bottomRadius: 0.001, height: 0.3)
-        geometry.radialSegmentCount = 3
-        geometry.firstMaterial?.diffuse.contents = UIColor.lightGray
+        let geometry = SCNCone(topRadius: 0.0, bottomRadius: 0.002, height: 0.3)
+        //geometry.radialSegmentCount = 3
+        geometry.firstMaterial?.diffuse.contents = UIColor.green
         let node = SCNNode()
         node.geometry = geometry
         node.eulerAngles.x = -.pi / 2
@@ -92,6 +133,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         lookAtTargetEyeLNode.position.z = 2
         lookAtTargetEyeRNode.position.z = 2
         
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(imageTapped(tapGestureRecognizer:)))
+        imageView1.isUserInteractionEnabled = true
+        imageView1.addGestureRecognizer(tapGestureRecognizer)
+    }
+    
+    @objc func imageTapped(tapGestureRecognizer: UITapGestureRecognizer)
+    {
+        LoadImage()
     }
     
     
@@ -100,8 +149,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         // Create a session configuration
         guard ARFaceTrackingConfiguration.isSupported else { return }
-        let configuration = ARFaceTrackingConfiguration()
-        configuration.isLightEstimationEnabled = true
+
         
         // Run the view's session
         sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
@@ -155,8 +203,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         blendShapes = anchor.blendShapes
         
-        eyeRNode.simdTransform = anchor.rightEyeTransform
-        eyeLNode.simdTransform = anchor.leftEyeTransform
+        //eyeRNode.simdTransform = anchor.rightEyeTransform
+        //eyeLNode.simdTransform = anchor.leftEyeTransform
+        
+        eyeLNode.transform = SCNMatrix4(anchor.leftEyeTransform)
+        eyeRNode.transform = SCNMatrix4(anchor.rightEyeTransform)
         
         var eyeLLookAt = CGPoint()
         var eyeRLookAt = CGPoint()
@@ -186,7 +237,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
             
             // Add the latest position and keep up to 8 recent position to smooth with.
-            let smoothThresholdNumber: Int = 10
+            let smoothThresholdNumber: Int = 20
             self.eyeLookAtPositionXs.append((eyeRLookAt.x + eyeLLookAt.x) / 2)
             self.eyeLookAtPositionYs.append(-(eyeRLookAt.y + eyeLLookAt.y) / 2)
             self.eyeLookAtPositionXs = Array(self.eyeLookAtPositionXs.suffix(smoothThresholdNumber))
