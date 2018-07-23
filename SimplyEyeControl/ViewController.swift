@@ -9,12 +9,53 @@
 import UIKit
 import ARKit
 
-class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
+class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
 
     @IBOutlet weak var sceneView: ARSCNView!
     
     @IBOutlet weak var eyeTrackingFocus: UIView!
     @IBOutlet weak var eyeTrackingFocus2: UIView!
+    
+    @IBOutlet weak var imageView1: UIImageView!
+    @IBOutlet weak var imageView2: UIImageView!
+
+    let configuration = ARFaceTrackingConfiguration()
+    //configuration.isLightEstimationEnabled = true
+    
+    
+    @IBAction func LoadImage1(_ sender: Any) {
+        
+        LoadImage()
+
+    }
+    
+    @objc func LoadImage() {
+        let picker = UIImagePickerController()
+        picker.allowsEditing = true
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        dismiss(animated: true)
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController,
+                               didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        var newImage: UIImage
+        
+        if let possibleImage = info[UIImagePickerController.InfoKey.editedImage] as? UIImage {
+            newImage = possibleImage
+        } else if let possibleImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
+            newImage = possibleImage
+        } else {
+            return
+        }
+        
+        imageView1.image = newImage
+        
+        dismiss(animated: true)
+    }
     
     var faceNode: SCNNode = SCNNode()
     
@@ -93,6 +134,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         lookAtTargetEyeLNode.position.z = 2
         lookAtTargetEyeRNode.position.z = 2
         
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(imageTapped(tapGestureRecognizer:)))
+        imageView1.isUserInteractionEnabled = true
+        imageView1.addGestureRecognizer(tapGestureRecognizer)
+    }
+    
+    @objc func imageTapped(tapGestureRecognizer: UITapGestureRecognizer)
+    {
+        LoadImage()
     }
     
     
@@ -101,8 +150,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         // Create a session configuration
         guard ARFaceTrackingConfiguration.isSupported else { return }
-        let configuration = ARFaceTrackingConfiguration()
-        configuration.isLightEstimationEnabled = true
+
         
         // Run the view's session
         sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
@@ -156,9 +204,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         blendShapes = anchor.blendShapes
         
+<<<<<<< HEAD
         
         eyeRNode.simdTransform = anchor.rightEyeTransform
         eyeLNode.simdTransform = anchor.leftEyeTransform
+=======
+        //eyeRNode.simdTransform = anchor.rightEyeTransform
+        //eyeLNode.simdTransform = anchor.leftEyeTransform
+        
+        eyeLNode.transform = SCNMatrix4(anchor.leftEyeTransform)
+        eyeRNode.transform = SCNMatrix4(anchor.rightEyeTransform)
+>>>>>>> 5729813505e998857db84f0d51fff21241a30a1a
         
         let lookAtPoint2 = anchor.lookAtPoint
         let x = lookAtPoint2.x
@@ -193,7 +249,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             }
             
             // Add the latest position and keep up to 8 recent position to smooth with.
-            let smoothThresholdNumber: Int = 10
+            let smoothThresholdNumber: Int = 20
             self.eyeLookAtPositionXs.append((eyeRLookAt.x + eyeLLookAt.x) / 2)
             self.eyeLookAtPositionYs.append(-(eyeRLookAt.y + eyeLLookAt.y) / 2)
             self.eyeLookAtPositionXs = Array(self.eyeLookAtPositionXs.suffix(smoothThresholdNumber))
