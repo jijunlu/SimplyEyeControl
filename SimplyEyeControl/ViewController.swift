@@ -14,13 +14,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     @IBOutlet weak var sceneView: ARSCNView!
     
     @IBOutlet weak var eyeTrackingFocus: UIView!
+    @IBOutlet weak var eyeTrackingFocus2: UIView!
     
     var faceNode: SCNNode = SCNNode()
     
     var eyeLNode: SCNNode = {
-        let geometry = SCNCone(topRadius: 0.005, bottomRadius: 0.001, height: 0.3)
-        geometry.radialSegmentCount = 3
-        geometry.firstMaterial?.diffuse.contents = UIColor.lightGray
+        let geometry = SCNCone(topRadius: 0.0, bottomRadius: 0.002, height: 0.3)
+        //geometry.radialSegmentCount = 3
+        geometry.firstMaterial?.diffuse.contents = UIColor.red
         let node = SCNNode()
         node.geometry = geometry
         node.eulerAngles.x = -.pi / 2
@@ -31,9 +32,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }()
     
     var eyeRNode: SCNNode = {
-        let geometry = SCNCone(topRadius: 0.005, bottomRadius: 0.001, height: 0.3)
-        geometry.radialSegmentCount = 3
-        geometry.firstMaterial?.diffuse.contents = UIColor.lightGray
+        let geometry = SCNCone(topRadius: 0.0, bottomRadius: 0.002, height: 0.3)
+        //geometry.radialSegmentCount = 3
+        geometry.firstMaterial?.diffuse.contents = UIColor.green
         let node = SCNNode()
         node.geometry = geometry
         node.eulerAngles.x = -.pi / 2
@@ -155,8 +156,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         blendShapes = anchor.blendShapes
         
+        
         eyeRNode.simdTransform = anchor.rightEyeTransform
         eyeLNode.simdTransform = anchor.leftEyeTransform
+        
+        let lookAtPoint2 = anchor.lookAtPoint
+        let x = lookAtPoint2.x
+        let y = lookAtPoint2.y
+        let z = lookAtPoint2.z
         
         var eyeLLookAt = CGPoint()
         var eyeRLookAt = CGPoint()
@@ -198,6 +205,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
             
             // update indicator position
             self.eyeTrackingFocus.transform = CGAffineTransform(translationX: smoothEyeLookAtPositionX, y: smoothEyeLookAtPositionY)
+            
+            
+            print(lookAtPoint2.x)
+            print(lookAtPoint2.y)
+            
+            self.eyeTrackingFocus2.transform = CGAffineTransform(translationX: CGFloat(lookAtPoint2.x), y: CGFloat(lookAtPoint2.y))
             
             /*
             // update eye look at labels values
